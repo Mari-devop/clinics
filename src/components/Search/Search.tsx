@@ -1,34 +1,25 @@
-// src/components/Search/Search.tsx
 import React, { useState } from 'react';
-import { useLazyQuery } from '@apollo/client';
-import SearchIcon from '@mui/icons-material/Search';
-import { SEARCH_CLINICS } from '../../queries';
-import { SearchComponent } from './Search.styled';
 import { Clinic } from '../../types';
-import { FiltersType } from '../Filters/Filters';
+import { SearchComponent } from './Search.styled';
+import SearchIcon from '@mui/icons-material/Search';
 
 interface SearchProps {
-  filters: FiltersType;
+  clinics: Clinic[];
   onSearch: (results: Clinic[]) => void;
 }
 
-const Search: React.FC<SearchProps> = ({ filters, onSearch }) => {
+const Search: React.FC<SearchProps> = ({ clinics, onSearch }) => {
   const [searchInput, setSearchInput] = useState('');
-  const [getClinics, { loading, error }] = useLazyQuery(SEARCH_CLINICS, {
-    onCompleted: (data) => {
-      onSearch(data.searchClinics);
-    },
-  });
 
   const handleSearch = () => {
-    const searchParams = {
-      clinicName: filters.clinicName ? searchInput : null,
-      city: filters.city ? searchInput : null,
-      state: filters.state ? searchInput : null,
-      zip: filters.zip ? searchInput : null,
-      suburb: filters.suburb ? searchInput : null,
-    };
-    getClinics({ variables: searchParams });
+    const filteredClinics = clinics.filter(clinic => 
+      clinic.clinicName.toLowerCase().includes(searchInput.toLowerCase()) ||
+      clinic.city.toLowerCase().includes(searchInput.toLowerCase()) ||
+      clinic.state.toLowerCase().includes(searchInput.toLowerCase()) ||
+      clinic.postcode.toLowerCase().includes(searchInput.toLowerCase()) ||
+      clinic.suburb.toLowerCase().includes(searchInput.toLowerCase())
+    );
+    onSearch(filteredClinics);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -49,8 +40,6 @@ const Search: React.FC<SearchProps> = ({ filters, onSearch }) => {
         />
         <SearchIcon onClick={handleSearch} />
       </SearchComponent>
-      {loading && <p>Loading...</p>}
-      {error && <p>Error: {error.message}</p>}
     </div>
   );
 };

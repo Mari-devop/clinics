@@ -8,4 +8,7 @@ export interface Clinic {
     slug: string;
     state: string;
     aboutClinic: string;
+    city: string;
+    postcode: string;
+    suburb: string;
 }

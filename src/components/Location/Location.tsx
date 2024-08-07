@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api';
+import { GoogleMap, useLoadScript } from '@react-google-maps/api';
 import { Clinic } from '../../types';
 import { Container, Buttons, Details, AboutContainer } from './Location.styled';
 
@@ -14,6 +14,7 @@ interface LocationProps {
 const Location: React.FC<LocationProps> = ({ clinics, selectedClinic, selectedLocation }) => {
   const [activeTab, setActiveTab] = useState('map');
   const mapRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyAwP2hbdwlbHxeUQJ_WCVKp7RoDzyBrmA4',
@@ -29,7 +30,6 @@ const Location: React.FC<LocationProps> = ({ clinics, selectedClinic, selectedLo
 
   const [center, setCenter] = useState(defaultCenter);
   const [zoom, setZoom] = useState(4);
-  const [markerPositions, setMarkerPositions] = useState<{ lat: number; lng: number }[]>([]);
 
   useEffect(() => {
     if (selectedLocation) {
@@ -45,19 +45,17 @@ const Location: React.FC<LocationProps> = ({ clinics, selectedClinic, selectedLo
   useEffect(() => {
     if (selectedClinic) {
       const clinicPosition = { lat: selectedClinic.latitude, lng: selectedClinic.longitude };
-      setMarkerPositions((prevMarkers) => {
-        const existingMarker = prevMarkers.find(
-          (marker) => marker.lat === clinicPosition.lat && marker.lng === clinicPosition.lng
-        );
-        if (existingMarker) return prevMarkers;
-        return [...prevMarkers, clinicPosition];
-      });
       setCenter(clinicPosition);
       setZoom(14);
       if (mapRef.current) {
         mapRef.current.panTo(clinicPosition);
         mapRef.current.setZoom(14);
       }
+
+      markersRef.current.forEach(marker => {
+        const isSelected = marker.getPosition()?.lat() === clinicPosition.lat && marker.getPosition()?.lng() === clinicPosition.lng;
+        marker.setIcon(isSelected ? 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png' : 'https://maps.google.com/mapfiles/ms/icons/red-dot.png');
+      });
     }
   }, [selectedClinic]);
 
@@ -67,6 +65,24 @@ const Location: React.FC<LocationProps> = ({ clinics, selectedClinic, selectedLo
       map.panTo(selectedLocation);
       map.setZoom(14);
     }
+
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+
+    clinics.forEach((clinic) => {
+      if (clinic.latitude && clinic.longitude) {
+        console.log(`Adding marker for: ${clinic.clinicName} at ${clinic.latitude}, ${clinic.longitude}`); // Отладочное сообщение
+        const marker = new google.maps.Marker({
+          map,
+          position: { lat: clinic.latitude, lng: clinic.longitude },
+          title: clinic.clinicName,
+          icon: selectedClinic && selectedClinic.slug === clinic.slug 
+            ? 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+            : 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+        });
+        markersRef.current.push(marker);
+      }
+    });
   };
 
   if (loadError) return <div>Error loading maps</div>;
@@ -85,20 +101,6 @@ const Location: React.FC<LocationProps> = ({ clinics, selectedClinic, selectedLo
           zoom={zoom}
           onLoad={onMapLoad}
         >
-          {clinics.map((clinic, index) => (
-            <Marker
-              key={index}
-              position={{ lat: clinic.latitude, lng: clinic.longitude }}
-              icon={
-                selectedClinic && selectedClinic.slug === clinic.slug
-                  ? 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-                  : 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
-              }
-            />
-          ))}
-          {markerPositions.map((marker, index) => (
-            <Marker key={index} position={marker} />
-          ))}
         </GoogleMap>
       ) : (
         selectedClinic && (

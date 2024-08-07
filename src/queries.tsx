@@ -1,21 +1,8 @@
-// src/queries.js
 import { gql } from '@apollo/client';
 
-export const SEARCH_CLINICS = gql`
-  query SearchClinics(
-    $clinicName: String
-    $city: String
-    $state: String
-    $zip: String
-    $suburb: String
-  ) {
-    searchClinics(
-      clinicName: $clinicName
-      city: $city
-      state: $state
-      zip: $zip
-      suburb: $suburb
-    ) {
+export const GET_ALL_CLINICS = gql`
+  query GetAllClinics {
+    searchClinics {
       slug
       website
       clinicName
