@@ -5,4 +5,7 @@ export interface Clinic {
     phone: string;
     latitude: number;
     longitude: number;
+    slug: string;
+    state: string;
+    aboutClinic: string;
 }

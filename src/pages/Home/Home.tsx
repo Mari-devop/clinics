@@ -8,6 +8,7 @@ import { Clinic } from '../../types';
 
 const Home: React.FC = () => {
   const [searchResults, setSearchResults] = useState<Clinic[]>([]);
+  const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
   const [filters, setFilters] = useState<FiltersType>({
     city: false,
     state: false,
@@ -16,12 +17,23 @@ const Home: React.FC = () => {
     suburb: false,
   });
 
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+
   const handleSearchResults = (results: Clinic[]) => {
     setSearchResults(results);
+    setSelectedClinic(null); 
+    setSelectedLocation(null); // Сбросить выбранную локацию при новом поиске
   };
 
   const handleFilterChange = (newFilters: FiltersType) => {
     setFilters(newFilters);
+  };
+
+  const handleSelectClinic = (clinic: Clinic) => {
+    setSelectedClinic(clinic);
+    if (clinic.latitude && clinic.longitude) {
+      setSelectedLocation({ lat: clinic.latitude, lng: clinic.longitude });
+    }
   };
 
   return (
@@ -29,8 +41,12 @@ const Home: React.FC = () => {
       <Search filters={filters} onSearch={handleSearchResults} />
       <Filters onFilterChange={handleFilterChange} />
       <MainContainer>
-        <SearchResult clinics={searchResults} />
-        <Location clinics={searchResults} />
+        <SearchResult clinics={searchResults} onSelectClinic={handleSelectClinic} />
+        <Location 
+          clinics={searchResults} 
+          selectedClinic={selectedClinic} 
+          selectedLocation={selectedLocation} 
+        />
       </MainContainer>
     </Container>
   );

@@ -1,29 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { GoogleMap, LoadScript, Marker, useLoadScript } from '@react-google-maps/api';
+import React, { useState, useRef, useEffect } from 'react';
+import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api';
 import { Clinic } from '../../types';
-import { Container, Buttons } from './Location.styled';
+import { Container, Buttons, Details, AboutContainer } from './Location.styled';
+
+const libraries: ('places' | 'drawing' | 'geometry' | 'visualization')[] = ['places'];
 
 interface LocationProps {
   clinics: Clinic[];
+  selectedClinic: Clinic | null;
+  selectedLocation: { lat: number; lng: number } | null;
 }
 
-const Location: React.FC<LocationProps> = ({ clinics }) => {
+const Location: React.FC<LocationProps> = ({ clinics, selectedClinic, selectedLocation }) => {
   const [activeTab, setActiveTab] = useState('map');
+  const mapRef = useRef<google.maps.Map | null>(null);
+
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: 'AIzaSyAwP2hbdwlbHxeUQJ_WCVKp7RoDzyBrmA4',
-    libraries: ['places'],
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyAwP2hbdwlbHxeUQJ_WCVKp7RoDzyBrmA4',
+    libraries,
   });
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-  };
-
   const mapContainerStyle = {
-    height: '480px',
-    width: '685px',
+    height: '520px',
+    width: '710px',
   };
 
-  const center = clinics.length > 0 ? { lat: clinics[0].latitude, lng: clinics[0].longitude } : { lat: -25.2744, lng: 133.7751 };
+  const defaultCenter = { lat: -25.2744, lng: 133.7751 };
+
+  const [center, setCenter] = useState(defaultCenter);
+  const [zoom, setZoom] = useState(4);
+  const [markerPositions, setMarkerPositions] = useState<{ lat: number; lng: number }[]>([]);
+
+  useEffect(() => {
+    if (selectedLocation) {
+      setCenter(selectedLocation);
+      setZoom(14);
+      if (mapRef.current) {
+        mapRef.current.panTo(selectedLocation);
+        mapRef.current.setZoom(14);
+      }
+    }
+  }, [selectedLocation]);
+
+  useEffect(() => {
+    if (selectedClinic) {
+      const clinicPosition = { lat: selectedClinic.latitude, lng: selectedClinic.longitude };
+      setMarkerPositions((prevMarkers) => {
+        const existingMarker = prevMarkers.find(
+          (marker) => marker.lat === clinicPosition.lat && marker.lng === clinicPosition.lng
+        );
+        if (existingMarker) return prevMarkers;
+        return [...prevMarkers, clinicPosition];
+      });
+      setCenter(clinicPosition);
+      setZoom(14);
+      if (mapRef.current) {
+        mapRef.current.panTo(clinicPosition);
+        mapRef.current.setZoom(14);
+      }
+    }
+  }, [selectedClinic]);
+
+  const onMapLoad = (map: google.maps.Map) => {
+    mapRef.current = map;
+    if (selectedLocation) {
+      map.panTo(selectedLocation);
+      map.setZoom(14);
+    }
+  };
 
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded) return <div>Loading...</div>;
@@ -31,28 +75,44 @@ const Location: React.FC<LocationProps> = ({ clinics }) => {
   return (
     <Container>
       <Buttons>
-        <button onClick={() => handleTabChange('map')}>Location</button>
-        <button onClick={() => handleTabChange('description')}>About Clinic</button>
+        <button onClick={() => setActiveTab('map')}>Location</button>
+        <button onClick={() => setActiveTab('about')}>About</button>
       </Buttons>
-      <div>
-        {activeTab === 'map' ? (
-          <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={5}>
-            {clinics.map((clinic, index) => (
-              <Marker key={index} position={{ lat: clinic.latitude, lng: clinic.longitude }} />
-            ))}
-          </GoogleMap>
-        ) : (
-          <div>
-            <h4>Clinic name</h4>
-            <div>
-              <p>City</p>
-              <p>Email</p>
-            </div>
-            <p>VIC</p>
-            <p>Description</p>
-          </div>
-        )}
-      </div>
+      {activeTab === 'map' ? (
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          center={center}
+          zoom={zoom}
+          onLoad={onMapLoad}
+        >
+          {clinics.map((clinic, index) => (
+            <Marker
+              key={index}
+              position={{ lat: clinic.latitude, lng: clinic.longitude }}
+              icon={
+                selectedClinic && selectedClinic.slug === clinic.slug
+                  ? 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                  : 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+              }
+            />
+          ))}
+          {markerPositions.map((marker, index) => (
+            <Marker key={index} position={marker} />
+          ))}
+        </GoogleMap>
+      ) : (
+        selectedClinic && (
+          <AboutContainer>
+            <h4>{selectedClinic.clinicName}</h4>
+            <p>{selectedClinic.fullAddress}</p>
+            <Details>
+              <p>{selectedClinic.state}</p>
+              <p><a href={selectedClinic.website}>{selectedClinic.website}</a></p>
+            </Details>
+            <p className='about'>{selectedClinic.aboutClinic}</p>
+          </AboutContainer>
+        )
+      )}
     </Container>
   );
 };

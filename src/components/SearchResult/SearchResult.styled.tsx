@@ -14,12 +14,41 @@ export const ResultContainer = styled.div`
 export const ResultItem = styled.div`
     display: flex;
     flex-direction: column;
-    padding: 10px;
+    padding: 20px;
     border-bottom: 1px solid var(--border-color);
+
+    h4 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 500;
+    }
+
+    p {
+        margin: 5px 0;
+        font-size: 0.9rem;
+        color: var(--secondary-text-color);
+        font-weight: 500;
+    }
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover {
+        background-color: var(--hover-color);
+        cursor: pointer;
+    }
 `;
 
 export const Details = styled.div`
     display: flex;
     justify-content: space-between;
     width: 100%;
+    margin-top: 15px;
+
+    a {
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-decoration: none;
+    }
 `;

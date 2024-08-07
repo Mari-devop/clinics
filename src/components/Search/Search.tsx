@@ -1,3 +1,4 @@
+// src/components/Search/Search.tsx
 import React, { useState } from 'react';
 import { useLazyQuery } from '@apollo/client';
 import SearchIcon from '@mui/icons-material/Search';
@@ -20,7 +21,14 @@ const Search: React.FC<SearchProps> = ({ filters, onSearch }) => {
   });
 
   const handleSearch = () => {
-    getClinics({ variables: { ...filters, searchInput } });
+    const searchParams = {
+      clinicName: filters.clinicName ? searchInput : null,
+      city: filters.city ? searchInput : null,
+      state: filters.state ? searchInput : null,
+      zip: filters.zip ? searchInput : null,
+      suburb: filters.suburb ? searchInput : null,
+    };
+    getClinics({ variables: searchParams });
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {

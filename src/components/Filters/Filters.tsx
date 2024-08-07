@@ -1,16 +1,17 @@
+// src/components/Filters/Filters.tsx
 import React, { useState } from 'react';
 import { FilterButtons } from './Filters.styled';
 
-interface FiltersProps {
-  onFilterChange: (filters: FiltersType) => void;
-}
-
-interface FiltersType {
+export interface FiltersType {
   city: boolean;
   state: boolean;
   zip: boolean;
   clinicName: boolean;
   suburb: boolean;
+}
+
+interface FiltersProps {
+  onFilterChange: (filters: FiltersType) => void;
 }
 
 const Filters: React.FC<FiltersProps> = ({ onFilterChange }) => {
@@ -81,4 +82,4 @@ const Filters: React.FC<FiltersProps> = ({ onFilterChange }) => {
 };
 
 export default Filters;
-export type { FiltersType };
+
