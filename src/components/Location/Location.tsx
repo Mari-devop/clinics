@@ -71,7 +71,6 @@ const Location: React.FC<LocationProps> = ({ clinics, selectedClinic, selectedLo
 
     clinics.forEach((clinic) => {
       if (clinic.latitude && clinic.longitude) {
-        console.log(`Adding marker for: ${clinic.clinicName} at ${clinic.latitude}, ${clinic.longitude}`); // Отладочное сообщение
         const marker = new google.maps.Marker({
           map,
           position: { lat: clinic.latitude, lng: clinic.longitude },

@@ -1,4 +1,3 @@
-// src/components/Filters/Filters.tsx
 import React, { useState } from 'react';
 import { FilterButtons } from './Filters.styled';
 
